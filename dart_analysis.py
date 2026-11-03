@@ -75,23 +75,25 @@ for _, report in reports.iterrows():
 
     year = str(report["rcept_dt"])[:4]
 
-    res = requests.get(
-        f"{BASE_URL}/fnlttSinglAcntAll.json",
-        params={
-            "crtfc_key": API_KEY,
-            "corp_code": corp_code,
-            "bsns_year": year,
-            "reprt_code": code,
-            "fs_div": "CFS"
-        }
-    )
+     for fs_div in ["CFS", "OFS"]:
+            res = requests.get(
+                f"{BASE_URL}/fnlttSinglAcntAll.json",
+                params={
+                    "crtfc_key": API_KEY,
+                    "corp_code": corp_code,
+                    "bsns_year": year,
+                    "reprt_code": code,
+                    "fs_div": fs_div
+                }
+            )
+            result = res.json()
 
-    result = res.json()
-
-    if result.get("status") == "000":
-        for item in result.get("list", []):
-            item["rcept_no"] = receipt_no
-            results.append(item)
+            if result.get("status") == "000" and result.get("list"):
+                for item in result["list"]:
+                    item["rcpt_no"] = receipt_no
+                    item["fs_div"] = fs_div
+                    results.append(item)
+                break
 
 if results:
     pd.DataFrame(results).to_csv(
